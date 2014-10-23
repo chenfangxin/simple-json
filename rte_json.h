@@ -25,6 +25,7 @@ struct rte_json{
 
 int is_valid_json(const char *buf, int len);
 
-struct rte_json *rte_json_parse(const char *str);
+struct rte_json *rte_parse_json(const char *str);
+int rte_destroy_json(struct rte_json *json);
 
 #endif

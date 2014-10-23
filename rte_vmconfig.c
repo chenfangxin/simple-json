@@ -6,14 +6,12 @@
 struct vmconfig *create_vmconfig(const char *buf)
 {
 	struct rte_json *json = NULL;	
-	json = rte_json_parse(buf);
+	json = rte_parse_json(buf);
 	if(NULL==json){
 		printf("JSON Parse Failed.\n");
 		return NULL;
 	}
-	while(1)
-		sleep(1);
-
+	rte_destroy_json(json);
 	return NULL;
 }
 
