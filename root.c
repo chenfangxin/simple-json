@@ -32,8 +32,10 @@ int main(int argc, char *argv[])
 	}
 
 	read(fd, filebuf, st.st_size);
+	close(fd);
 	printf("%s", filebuf);
 	
+#if 0	
 	vmcfg = create_vmconfig(filebuf);
 	if(NULL==vmcfg){
 		goto out1;
@@ -49,6 +51,7 @@ out2:
 	free(new);
 out1:
 	free(filebuf);
-	close(fd);
+#endif
+
 	return 0;
 }

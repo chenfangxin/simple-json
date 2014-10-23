@@ -11,12 +11,19 @@ enum json_type{
 	JSON_STRING,/* 字符串 */
 };
 
+/* JSON的值类型 */
 struct rte_json{
-	enum json_type type;
+	struct rte_json *next, *prev; // 用于串联结构类型的成员
+	struct rte_json *child; // 指向Object或Array的成员 
+	enum json_type type; // 类型
+	char *name; //
 	union{
-		
+		char *val_str;	
+		long val_int;
+		float val_flt;
 	}u;
 };
-int rte_valid_json(const char *buf, int len);
+
+int is_valid_json(const char *buf, int len);
 
 #endif
