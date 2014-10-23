@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include "rte_json.h"
 #include "rte_vmconfig.h"
 
@@ -10,6 +11,9 @@ struct vmconfig *create_vmconfig(const char *buf)
 		printf("JSON Parse Failed.\n");
 		return NULL;
 	}
+	while(1)
+		sleep(1);
+
 	return NULL;
 }
 
