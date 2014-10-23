@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
 	close(fd);
 	printf("%s", filebuf);
 	
-#if 0	
 	vmcfg = create_vmconfig(filebuf);
 	if(NULL==vmcfg){
 		goto out1;
@@ -51,7 +50,6 @@ out2:
 	free(new);
 out1:
 	free(filebuf);
-#endif
 
 	return 0;
 }

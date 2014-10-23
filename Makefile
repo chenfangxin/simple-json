@@ -2,11 +2,12 @@ TARGETS := demo
 
 target_OBJECTS = root.o rte_json.o rte_parser.o rte_vmconfig.o
 
+LIBS = -lm
 INCLUDES =
-CFLAGS = -g
+CFLAGS = -g -Wall
 CC = gcc
 
-COMPILE = $(CC) $(CFLAGS) $(INCLUDES)
+COMPILE = $(CC) $(CFLAGS) $(INCLUDES) $(LIBS)
 LINK = $(COMPILE) -o $@
 
 all: $(TARGETS)

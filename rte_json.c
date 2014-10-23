@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
+#include <string.h>
 #include "rte_json.h"
 
 static const char *err_point=NULL;
@@ -23,24 +25,195 @@ int is_valid_json(const char *buf, int len)
 	return 0;
 }
 
-
 static inline struct rte_json *new_json_item(void)
 {
 	return (struct rte_json *)malloc(sizeof(struct rte_json));
 }
 
+static unsigned parse_hex4(const char *str)
+{
+	unsigned h=0;
+	if (*str>='0' && *str<='9'){
+		 h+=(*str)-'0';
+	}else if (*str>='A' && *str<='F'){
+		 h+=10+(*str)-'A'; 
+	}else if (*str>='a' && *str<='f'){
+		h+=10+(*str)-'a'; 
+	}else {
+		return 0;
+	}
+
+	h=h<<4;
+	str++;
+	if (*str>='0' && *str<='9'){ 
+		h+=(*str)-'0'; 
+	}else if (*str>='A' && *str<='F'){ 
+		h+=10+(*str)-'A'; 
+	}else if (*str>='a' && *str<='f'){ 
+		h+=10+(*str)-'a'; 
+	}else {
+		return 0;
+	}
+
+	h=h<<4;
+	str++;
+	if (*str>='0' && *str<='9'){ 
+		h+=(*str)-'0'; 
+	}else if (*str>='A' && *str<='F'){ 
+		h+=10+(*str)-'A'; 
+	}else if (*str>='a' && *str<='f'){ 
+		h+=10+(*str)-'a'; 
+	}else{ 
+		return 0;
+	}
+
+	h=h<<4;
+	str++;
+	if (*str>='0' && *str<='9'){ 
+		h+=(*str)-'0'; 
+	}else if (*str>='A' && *str<='F'){ 
+		h+=10+(*str)-'A'; 
+	}else if (*str>='a' && *str<='f'){ 
+		h+=10+(*str)-'a'; 
+	}else {
+		return 0;
+	}
+	return h;
+}
+
+static const unsigned char firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
 static const char *json_parse_string(struct rte_json *json, const char *value)
 {
 	const char *ptr=value+1;
-	char *ptr2;
-	char *out;
+	char *ptr2=NULL;
+	char *out=NULL;
 	int len=0;
-	unsigned uc, uc2;
+	unsigned uc,uc2;
 
-	if(*value!='\"'){
-		err_point = value;
+	if(*value!='\"'){ 
+		err_point=value;
 		return NULL;
 	}
+	
+	while (*ptr!='\"' && *ptr && ++len){ /* 确定字符串的长度 */
+		if(*ptr++ == '\\'){	/* Skip escaped quotes. */
+			ptr++;
+		}
+	}
+	
+	out=(char*)malloc(len+1); /* 分配字符串所需的空间 */
+	if (NULL==out){
+		return NULL;
+	}
+	
+	ptr=value+1;
+	ptr2=out;
+	while (*ptr!='\"' && *ptr){
+		if (*ptr!='\\'){
+			*ptr2++=*ptr++;
+		} else {
+			ptr++;
+			switch (*ptr) {
+				case 'b': *ptr2++='\b';	break;
+				case 'f': *ptr2++='\f';	break;
+				case 'n': *ptr2++='\n';	break;
+				case 'r': *ptr2++='\r';	break;
+				case 't': *ptr2++='\t';	break;
+				case 'u':	 /* transcode utf16 to utf8. */
+					uc=parse_hex4(ptr+1); /* get the unicode char. */
+					ptr+=4;	
+					if ((uc>=0xDC00 && uc<=0xDFFF) || uc==0){ /* check for invalid.	*/
+						break;	
+					}
+
+					if (uc>=0xD800 && uc<=0xDBFF){ /* UTF16 surrogate pairs.	*/
+						if (ptr[1]!='\\' || ptr[2]!='u'){ /* missing second-half of surrogate.	*/
+							break;	
+						}
+						uc2=parse_hex4(ptr+3);
+						ptr+=6;
+						if (uc2<0xDC00 || uc2>0xDFFF){ /* invalid second-half of surrogate.	*/
+							break;	
+						}
+						uc=0x10000 + (((uc&0x3FF)<<10) | (uc2&0x3FF));
+					}
+
+					len=4;
+					if (uc<0x80){
+						len=1;
+					}else if (uc<0x800){
+						len=2;
+					}else if (uc<0x10000) {
+						len=3; 
+					}
+					ptr2+=len;
+					
+					switch (len) {
+						case 4: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
+						case 3: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
+						case 2: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
+						case 1: *--ptr2 =(uc | firstByteMark[len]);
+					}
+					ptr2+=len;
+					break;
+				default: 
+					*ptr2++=*ptr; 
+					break;
+			}
+			ptr++;
+		}
+	}
+	if (*ptr=='\"'){
+		ptr++;
+	}
+	json->u.val_str=out;
+	json->type=JSON_STRING;
+	return ptr;
+}
+
+static const char *json_parse_number(struct rte_json *json, const char *value)
+{
+	float n=0.0, sign=1.0, scale=0.0;
+	int subscale=0, signsubscale=1;
+	if(*value=='-'){ // 负数
+		sign=-1.0;
+		value++;
+	}
+	if(*value=='0'){ //
+		value++;
+	}
+	if (*value>='1' && *value<='9'){
+		do{
+			n=(n*10.0)+(*value++ -'0');
+		}while (*value>='0' && *value<='9');	/* Number? */
+	}
+	if (*value=='.' && value[1]>='0' && value[1]<='9'){
+		value++;
+		do{
+			n=(n*10.0)+(*value++ -'0');
+			scale--;
+		}while (*value>='0' && *value<='9');
+	}	/* Fractional part? */
+
+	if (*value=='e' || *value=='E'){	/* Exponent? */
+		value++;
+		if (*value=='+'){
+			value++;
+		}else if (*value=='-'){
+			signsubscale=-1;
+			value++;		/* With sign? */
+		}
+		while (*value>='0' && *value<='9'){
+			subscale=(subscale*10)+(*value++ - '0');	/* Number? */
+		}
+	}
+
+	n=sign*n*pow(10.0,(scale+subscale*signsubscale));	/* number = +/- number.fraction * 10^+/- exponent */
+	
+	json->u.val_flt=n;
+	json->u.val_int=(int)n;
+	json->type=JSON_NUMBER;
+	return value;
 }
 
 static const char *json_parse_array(struct rte_json *json, const char *value)
@@ -100,7 +273,7 @@ static const char *json_parse_object(struct rte_json *json, const char *value)
 	if(NULL==child){
 		return NULL;
 	}
-	value = json_skip(json_parse_string(child, json_skip(value)));
+	value = json_skip(json_parse_string(child, json_skip(value))); // 解析成员的名字
 	if(NULL==value){
 		return NULL;
 	}
@@ -111,7 +284,7 @@ static const char *json_parse_object(struct rte_json *json, const char *value)
 		return NULL;
 	}
 	value = json_skip(json_parse_value(child, json_skip(value+1)));
-	if(NULL==NULL){
+	if(NULL==value){
 		return NULL;
 	}
 	while(*value==','){
@@ -161,15 +334,20 @@ static const char *json_parse_value(struct rte_json *json, const char *value)
 		json->type = JSON_TRUE;
 		return value+4;
 	}
-	if(*value=='\"'){
+	if(*value=='\"'){ // 字符串
 		return json_parse_string(json, value);
 	}
-	if(*value=='['){
+	if(*value=='-'||(*value>='0' && *value<='9')){ // 数值
+		return json_parse_number(json, value);
+	}
+	if(*value=='['){ // Array
 		return json_parse_array(json, value);
 	}
-	if(*value=='{'){
+	if(*value=='{'){ // Object
 		return json_parse_object(json, value);
 	}
+	err_point = value;
+	return NULL;
 }
 
 struct rte_json *rte_json_parse(const char *str)
@@ -183,4 +361,9 @@ struct rte_json *rte_json_parse(const char *str)
 	}
 	
 	end = json_parse_value(json, json_skip(str));	
+	if(NULL==end){
+		return NULL;
+	}
+
+	return json;
 }

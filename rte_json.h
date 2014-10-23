@@ -6,8 +6,7 @@ enum json_type{
 	JSON_TRUE,	/* true */
 	JSON_OBJECT,/* 对象 */
 	JSON_ARRAY, /* 数组 */
-	JSON_INTEGER,/* 整数 */
-	JSON_REAL,	/* 实数 */
+	JSON_NUMBER,/* 数值 */
 	JSON_STRING,/* 字符串 */
 };
 
@@ -25,5 +24,7 @@ struct rte_json{
 };
 
 int is_valid_json(const char *buf, int len);
+
+struct rte_json *rte_json_parse(const char *str);
 
 #endif
