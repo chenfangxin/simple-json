@@ -13,8 +13,8 @@ enum json_type{
 
 /* JSON的值类型 */
 struct rte_json{
-	struct rte_json *next, *prev; // 用于串联结构类型的成员
-	struct rte_json *child; // 指向Object或Array的成员 
+	struct rte_json *next, *prev; // 用于串联结构类型中并列的成员
+	struct rte_json *member; // 指向Object或Array的成员 
 	enum json_type type; // 类型
 	char *name; //
 	union{

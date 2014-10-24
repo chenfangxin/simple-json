@@ -230,7 +230,7 @@ static const char *json_parse_number(struct rte_json *json, const char *value)
 
 static const char *json_parse_array(struct rte_json *json, const char *value)
 {
-	struct rte_json *child = NULL;
+	struct rte_json *member= NULL;
 	if(*value != '['){
 		err_point = value;
 		return NULL;
@@ -240,12 +240,12 @@ static const char *json_parse_array(struct rte_json *json, const char *value)
 	if(*value==']'){ // 空Array
 		return value+1;
 	}
-	child = new_json_item();
-	if(NULL==child){
+	member = new_json_item();
+	if(NULL==member){
 		return NULL;
 	}
-	json->child = child;
-	value = json_skip(json_parse_value(child, json_skip(value)));
+	json->member=member;
+	value = json_skip(json_parse_value(member, json_skip(value)));
 	if(NULL==value){
 		return NULL;
 	}
@@ -254,10 +254,10 @@ static const char *json_parse_array(struct rte_json *json, const char *value)
 		if(NULL==item){
 			return NULL;
 		}
-		child->next=item; // 添加到链表中 
-		item->prev=child;
-		child = item;
-		value = json_skip(json_parse_value(child, json_skip(value+1)));
+		member->next=item; // 添加到链表中 
+		item->prev=member;
+		member=item;
+		value = json_skip(json_parse_value(member, json_skip(value+1)));
 		if(NULL==value){
 			return NULL;
 		}
@@ -272,7 +272,7 @@ static const char *json_parse_array(struct rte_json *json, const char *value)
 
 static const char *json_parse_object(struct rte_json *json, const char *value)
 {
-	struct rte_json *child=NULL;	
+	struct rte_json *member=NULL;	
 	if(*value!='{'){
 		err_point = value;
 		return NULL;
@@ -282,22 +282,22 @@ static const char *json_parse_object(struct rte_json *json, const char *value)
 	if(*value=='}'){ // 空Object
 		return value + 1;
 	}
-	child = new_json_item();
-	if(NULL==child){
+	member = new_json_item();
+	if(NULL==member){
 		return NULL;
 	}
-	json->child = child;
-	value = json_skip(json_parse_string(child, json_skip(value))); // 解析成员的名字
+	json->member=member;
+	value = json_skip(json_parse_string(member, json_skip(value))); // 解析成员的名字
 	if(NULL==value){
 		return NULL;
 	}
-	child->name = child->u.val_str;
-	child->u.val_str = NULL;
+	member->name=member->u.val_str;
+	member->u.val_str = NULL;
 	if(*value!=':'){
 		err_point = value;
 		return NULL;
 	}
-	value = json_skip(json_parse_value(child, json_skip(value+1)));
+	value = json_skip(json_parse_value(member, json_skip(value+1)));
 	if(NULL==value){
 		return NULL;
 	}
@@ -306,22 +306,22 @@ static const char *json_parse_object(struct rte_json *json, const char *value)
 		if(NULL==item){
 			return NULL;
 		}
-		child->next=item;
-		item->prev=child;
-		child=item;
+		member->next=item;
+		item->prev=member;
+		member=item;
 
-		value = json_skip(json_parse_string(child, json_skip(value+1))); // 解析成员的名字
+		value = json_skip(json_parse_string(member, json_skip(value+1))); // 解析成员的名字
 		if(NULL==value){
 			return NULL;
 		}
 
-		child->name = child->u.val_str;
-	   	child->u.val_str = NULL; 	
+		member->name = member->u.val_str;
+	   	member->u.val_str = NULL; 	
 		if(*value!=':'){
 			err_point = value;
 			return NULL;
 		}
-		value=json_skip(json_parse_value(child, json_skip(value+1)));
+		value=json_skip(json_parse_value(member, json_skip(value+1)));
 		if(NULL==value){
 			return NULL;
 		}
@@ -390,8 +390,8 @@ int rte_destroy_json(struct rte_json *json)
 	struct rte_json *next=NULL;
 	while(json){
 		next = json->next;
-		if(json->child){
-			rte_destroy_json(json->child);
+		if(json->member){
+			rte_destroy_json(json->member);
 		}	
 		if(json->type==JSON_STRING){
 			free(json->u.val_str);
@@ -404,3 +404,4 @@ int rte_destroy_json(struct rte_json *json)
 	}
 	return 0;
 }
+
