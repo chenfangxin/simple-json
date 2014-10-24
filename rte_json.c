@@ -110,7 +110,7 @@ static const char *json_parse_string(struct rte_json *json, const char *value)
 	if (NULL==out){
 		return NULL;
 	}
-	
+		
 	ptr=value+1;
 	ptr2=out;
 	while (*ptr!='\"' && *ptr){
@@ -168,6 +168,7 @@ static const char *json_parse_string(struct rte_json *json, const char *value)
 			ptr++;
 		}
 	}
+	*ptr2='\0';
 	if (*ptr=='\"'){
 		ptr++;
 	}
@@ -405,3 +406,27 @@ int rte_destroy_json(struct rte_json *json)
 	return 0;
 }
 
+int rte_traverse_json(struct rte_json *json)
+{
+	struct rte_json *next=NULL;
+	while(json){
+		next = json->next;
+		if(json->name){
+			printf("%s:", json->name);
+		}
+		if(json->member){
+			rte_traverse_json(json->member);
+		}
+		if(json->type==JSON_STRING){
+			printf("%s ", json->u.val_str);
+		}
+		if(json->type==JSON_INTEGER){
+			printf("%ld ", json->u.val_int);
+		}
+		if(json->type==JSON_FLOAT){
+			printf("%f ", json->u.val_flt);
+		}
+		json = next;
+	}
+	return 0;	
+}

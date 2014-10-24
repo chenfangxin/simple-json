@@ -6,42 +6,42 @@
 
 /* 
  * 利用json结构，给结构体struct vmconfig赋值
- * 返回值：
- * 	0 -- 成功
- * 	-1 --失败
  * */
-static int parse_vmconfig_from_json(struct vmconfig *vmcfg, struct rte_json *json)
+static struct vmconfig *parse_vmconfig_from_json(struct rte_json *json)
 {
-	return 0;
+	struct vmconfig *vmcfg = (struct vmconfig *)malloc(sizeof(struct vmconfig));
+	if(NULL==vmcfg){
+		return NULL;
+	}
+	
+	return vmcfg;
+}
+
+static struct rte_json *persist_vmconfig_to_json(struct vmconfig *vmcfg)
+{
+	return NULL;
 }
 
 struct vmconfig *create_vmconfig(const char *buf)
 {
 	struct vmconfig *vmcfg=NULL;
 	struct rte_json *json = NULL;	
-	int ret=0;
 	json = rte_parse_json(buf);
 	if(NULL==json){
 		printf("JSON Parse Failed.\n");
 		return NULL;
 	}
-	vmcfg = (struct vmconfig *)malloc(sizeof(struct vmconfig));
-	if(NULL==vmcfg){
-		rte_destroy_json(json);
-		return NULL;
-	}
-	ret = parse_vmconfig_from_json(vmcfg, json);
-	if(ret){
-		free(vmcfg);
-		rte_destroy_json(json);
-		return NULL;
-	}
+	rte_traverse_json(json);
+	vmcfg = parse_vmconfig_from_json(json);
 	rte_destroy_json(json);
 	return vmcfg;
 }
 
 char *serialize_vmconfig(struct vmconfig *vmcfg)
 {
+	struct rte_json *json=NULL;	
+	json = persist_vmconfig_to_json(vmcfg);
+
 	return NULL;
 }
 
