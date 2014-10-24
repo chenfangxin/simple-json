@@ -1,0 +1,9 @@
+{
+	"vmname":"bos1",	
+	"cpuset":[0, 1],
+	"memszie":4096,
+	"disksize":3,
+	"mgtip":"10.0.0.1/24",
+	"ifset":[{"ifname":"ge1_0", "vlanid":100}, {"ifname":"ge1_1", "vlanid":100}],
+	"autorun":0
+}

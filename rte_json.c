@@ -289,7 +289,6 @@ static const char *json_parse_object(struct rte_json *json, const char *value)
 	json->child = child;
 	value = json_skip(json_parse_string(child, json_skip(value))); // 解析成员的名字
 	if(NULL==value){
-		free(child);
 		return NULL;
 	}
 	child->name = child->u.val_str;
@@ -313,7 +312,6 @@ static const char *json_parse_object(struct rte_json *json, const char *value)
 
 		value = json_skip(json_parse_string(child, json_skip(value+1))); // 解析成员的名字
 		if(NULL==value){
-			free(item);
 			return NULL;
 		}
 
@@ -380,6 +378,7 @@ struct rte_json *rte_parse_json(const char *str)
 	
 	end = json_parse_value(json, json_skip(str));	
 	if(NULL==end){
+		rte_destroy_json(json);
 		return NULL;
 	}
 
