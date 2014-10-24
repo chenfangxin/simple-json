@@ -180,6 +180,7 @@ static const char *json_parse_number(struct rte_json *json, const char *value)
 {
 	float n=0.0, sign=1.0, scale=0.0;
 	int subscale=0, signsubscale=1;
+	int flt_flag=0; 
 	if(*value=='-'){ // 负数
 		sign=-1.0;
 		value++;
@@ -193,6 +194,7 @@ static const char *json_parse_number(struct rte_json *json, const char *value)
 		}while (*value>='0' && *value<='9');	/* Number? */
 	}
 	if (*value=='.' && value[1]>='0' && value[1]<='9'){
+		flt_flag = 1;
 		value++;
 		do{
 			n=(n*10.0)+(*value++ -'0');
@@ -201,6 +203,7 @@ static const char *json_parse_number(struct rte_json *json, const char *value)
 	}	/* Fractional part? */
 
 	if (*value=='e' || *value=='E'){	/* Exponent? */
+		flt_flag = 1;
 		value++;
 		if (*value=='+'){
 			value++;
@@ -215,9 +218,13 @@ static const char *json_parse_number(struct rte_json *json, const char *value)
 
 	n=sign*n*pow(10.0,(scale+subscale*signsubscale));	/* number = +/- number.fraction * 10^+/- exponent */
 	
-	json->u.val_flt=n;
-	json->u.val_int=(int)n;
-	json->type=JSON_NUMBER;
+	if(flt_flag){
+		json->type=JSON_FLOAT;
+		json->u.val_flt=n;
+	}else {
+		json->type=JSON_INTEGER;
+		json->u.val_int=(int)n;
+	}
 	return value;
 }
 
@@ -237,23 +244,23 @@ static const char *json_parse_array(struct rte_json *json, const char *value)
 	if(NULL==child){
 		return NULL;
 	}
+	json->child = child;
 	value = json_skip(json_parse_value(child, json_skip(value)));
 	if(NULL==value){
 		return NULL;
 	}
-	json->child = child;
 	while(*value==','){
 		struct rte_json *item=new_json_item();
 		if(NULL==item){
 			return NULL;
 		}
-		value = json_skip(json_parse_value(item, json_skip(value+1)));
+		child->next=item; // 添加到链表中 
+		item->prev=child;
+		child = item;
+		value = json_skip(json_parse_value(child, json_skip(value+1)));
 		if(NULL==value){
 			return NULL;
 		}
-		child->next=item;
-		item->prev=child;
-		child = item;
 	}
 	if(*value==']'){
 		return value+1;
@@ -279,12 +286,12 @@ static const char *json_parse_object(struct rte_json *json, const char *value)
 	if(NULL==child){
 		return NULL;
 	}
+	json->child = child;
 	value = json_skip(json_parse_string(child, json_skip(value))); // 解析成员的名字
 	if(NULL==value){
 		free(child);
 		return NULL;
 	}
-	json->child = child;
 	child->name = child->u.val_str;
 	child->u.val_str = NULL;
 	if(*value!=':'){
@@ -300,14 +307,15 @@ static const char *json_parse_object(struct rte_json *json, const char *value)
 		if(NULL==item){
 			return NULL;
 		}
-		value = json_skip(json_parse_string(item, json_skip(value+1))); // 解析成员的名字
+		child->next=item;
+		item->prev=child;
+		child=item;
+
+		value = json_skip(json_parse_string(child, json_skip(value+1))); // 解析成员的名字
 		if(NULL==value){
 			free(item);
 			return NULL;
 		}
-		child->next=item;
-		item->prev=child;
-		child=item;
 
 		child->name = child->u.val_str;
 	   	child->u.val_str = NULL; 	

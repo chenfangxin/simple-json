@@ -4,10 +4,11 @@ enum json_type{
 	JSON_NULL,	/* null */
 	JSON_FALSE, /* false */
 	JSON_TRUE,	/* true */
+	JSON_INTEGER,/* 整数 */
+	JSON_FLOAT,/* 浮点数 */ 
+	JSON_STRING,/* 字符串 */
 	JSON_OBJECT,/* 对象 */
 	JSON_ARRAY, /* 数组 */
-	JSON_NUMBER,/* 数值 */
-	JSON_STRING,/* 字符串 */
 };
 
 /* JSON的值类型 */
