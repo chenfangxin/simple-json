@@ -5,10 +5,11 @@ target_OBJECTS = root.o rte_json.o rte_vmconfig.o
 LIBS = -lm
 INCLUDES =
 CFLAGS = -g -Wall
-CC = gcc
+# CC = gcc
+CC = clang
 
-COMPILE = $(CC) $(CFLAGS) $(INCLUDES) $(LIBS)
-LINK = $(COMPILE) -o $@
+COMPILE = $(CC) $(CFLAGS) $(INCLUDES) 
+LINK = $(COMPILE) -o $@ $(LIBS)
 
 all: $(TARGETS)
 	
