@@ -8,8 +8,8 @@ CFLAGS = -g -Wall
 # CC = gcc
 CC = clang
 
-COMPILE = $(CC) $(CFLAGS) $(INCLUDES) $(LIBS)
-LINK = $(COMPILE) -o $@
+COMPILE = $(CC) $(CFLAGS) $(INCLUDES) 
+LINK = $(COMPILE) -o $@ $(LIBS)
 
 all: $(TARGETS)
 	
