@@ -406,6 +406,16 @@ int rte_destroy_json(struct rte_json *json)
 	return 0;
 }
 
+int rte_add_item_to_object()
+{
+	return 0;
+}
+
+int rte_add_item_to_array()
+{
+	return 0;
+}
+
 int rte_traverse_json(struct rte_json *json)
 {
 	struct rte_json *next=NULL;
@@ -429,4 +439,160 @@ int rte_traverse_json(struct rte_json *json)
 		json = next;
 	}
 	return 0;	
+}
+
+static char *json_strdup(const char *str)
+{
+	int len;
+	char *copy=NULL;
+
+	len = strlen(str) + 1;
+	copy = (char *)malloc(len);
+	if(NULL==copy){
+		return NULL;
+	}
+	memset(copy, 0, len*sizeof(char));
+	memcpy(copy, str, len);
+	return copy;
+}
+
+static char *print_number(struct rte_json *json)
+{
+	char *str=NULL;
+	str = (char *)malloc(21);	
+	if(NULL==str){
+		return NULL;
+	}
+	memset(str, 0, 21*sizeof(char));
+
+	if(json->type==JSON_INTEGER){
+		sprintf(str, "%ld", json->u.val_int);
+	}else if(json->type==JSON_FLOAT){
+		sprintf(str, "%f", json->u.val_flt);
+	}
+
+	return str;
+}
+
+static char *print_string(struct rte_json *json)
+{
+	const char *ptr;
+	char *ptr2, *out;
+	int len=0;
+	unsigned char token;
+	const char *str = json->u.val_str;
+	if(NULL==str){
+		return json_strdup("");
+	}
+
+	ptr = str;	
+	while((token=*ptr) && ++len){
+		if(strchr("\"\\\b\f\n\r\t", token)){
+			len++;
+		}else if(token<32){
+			len+=5;
+		}
+		ptr++;
+	}
+	out = (char *)malloc(len+3);
+	if(NULL==out){
+		return NULL;
+	}
+	ptr2 = out;
+	ptr = str;
+	*ptr2++='\"';
+	while(*ptr){
+		if(((unsigned char)*ptr>31) && 
+				(*ptr!='\"') &&
+				(*ptr!='\\')){
+			*ptr2++=*ptr++;
+		}else{
+			*ptr2++='\\';
+			switch (token=*ptr++) {
+				case '\\':
+					*ptr2++='\\';	
+					break;
+				case '\"':
+					*ptr2++='\"';
+					break;
+				case '\b':
+					*ptr2++='b';
+					break;
+				case '\f':
+					*ptr2++='f';
+					break;
+				case '\n':
+					*ptr2++='n';
+					break;
+				case '\r':
+					*ptr2++='r';
+					break;
+				case '\t':
+					*ptr2++='t';
+					break;
+				default: 
+					sprintf(ptr2,"u%04x",token);
+					ptr2+=5;
+					break;
+			}
+
+		}
+	}
+	*ptr2++='\"';
+	*ptr2++='\0';
+	return out;
+}
+
+static char *print_array(struct rte_json *json, int depth)
+{
+	char *out=NULL;
+	return out;
+}
+
+static char *print_object(struct rte_json *json, int depth)
+{
+	char *out=NULL;
+	return out;
+}
+
+static char *print_value(struct rte_json *json, int depth)
+{
+	char *out=0;	
+	if(NULL==json){
+		return NULL;
+	}
+
+	switch(json->type & 0xff){
+		case JSON_NULL:
+			out = json_strdup("null");
+			break;
+		case JSON_FALSE:
+			out = json_strdup("false");
+			break;
+		case JSON_TRUE:
+			out = json_strdup("true");
+			break;
+		case JSON_INTEGER:
+		case JSON_FLOAT:
+			out = print_number(json);
+			break;
+		case JSON_STRING:
+			out = print_string(json);
+			break;
+		case JSON_OBJECT:
+			out = print_object(json, depth);
+			break;
+		case JSON_ARRAY:
+			out = print_array(json, depth);
+			break;
+	}
+	return out;
+}
+
+/*
+ * 根据JSON结构体中的内容， 输出JSON文本
+ * */
+char *rte_serialize_json(struct rte_json *json)
+{
+	return print_value(json, 0);
 }

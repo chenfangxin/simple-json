@@ -33,6 +33,9 @@ struct vmconfig *create_vmconfig(const char *buf)
 	}
 	rte_traverse_json(json);
 	vmcfg = parse_vmconfig_from_json(json);
+
+	printf("serialize: %s\n", rte_serialize_json(json));
+
 	rte_destroy_json(json);
 	return vmcfg;
 }

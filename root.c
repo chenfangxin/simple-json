@@ -39,13 +39,14 @@ int main(int argc, char *argv[])
 	if(NULL==vmcfg){
 		goto out1;
 	}
+#if 0
 	new = serialize_vmconfig(vmcfg);
 	if(NULL==new){
 		goto out2;	
 	}
 	printf("New json = %s\n", new);
-
 out2:
+#endif
 	destroy_vmconfig(vmcfg);
 	free(new);
 out1:
