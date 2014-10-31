@@ -252,6 +252,9 @@ int destroy_vmconfig(struct vmconfig *vmcfg)
 {
 	struct ifset *ifset=NULL;	
 	int idx=0;
+	if(NULL==vmcfg){
+		return 0;
+	}
 	for(idx=0;idx<MAX_IF_NUM;idx++){
 		ifset = vmcfg->ifset[idx];
 		if(NULL==ifset){

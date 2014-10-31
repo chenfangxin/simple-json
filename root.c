@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "rte_json.h"
 #include "rte_vmconfig.h"
 
 int main(int argc, char *argv[])
@@ -13,6 +14,7 @@ int main(int argc, char *argv[])
 	int fd=0;
 	struct stat st;
 	struct vmconfig *vmcfg=NULL;
+	struct rte_json *json=NULL;
 	char *new=NULL;
 
 	memset(&st, 0, sizeof(struct stat));
@@ -20,7 +22,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-    fd = open("vmconfig.json", O_RDWR);
+	fd = open("vmconfig.json", O_RDWR);
 	if(fd<0){
 		return -1;
 	}
@@ -34,7 +36,7 @@ int main(int argc, char *argv[])
 	read(fd, filebuf, st.st_size);
 	close(fd);
 	printf("%s", filebuf);
-	
+#if 0	
 	vmcfg = create_vmconfig(filebuf);
 	if(NULL==vmcfg){
 		goto out1;
@@ -44,6 +46,10 @@ int main(int argc, char *argv[])
 	if(NULL==new){
 		goto out2;	
 	}
+#endif
+	json = rte_parse_json(filebuf);
+	rte_object_del_item(json, "vmname");
+	new = rte_serialize_json(json);
 	printf("New json = %s\n", new);
 
 out2:
