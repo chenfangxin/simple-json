@@ -643,7 +643,7 @@ static char *print_object(struct rte_json *json, int depth)
 		entries[i] = value = print_value(item, depth);
 		i++;	
 		if(name && value){
-			len += strlen(name)+strlen(value)+4+depth; // 多分4个字符,用于存放:\t,\n
+			len += strlen(name)+strlen(value)+3+depth; // 多分3个字符,用于存放:,\n
 		}else{
 			fail=1;
 		}
@@ -680,7 +680,6 @@ static char *print_object(struct rte_json *json, int depth)
 		strcpy(ptr, names[i]);
 		ptr+=strlen(names[i]);
 		*ptr++=':';
-		*ptr++='\t';
 		strcpy(ptr, entries[i]);
 		ptr+=strlen(entries[i]);
 		if(i!=(numentries-1)){ // 最后一个member后面没有逗号
