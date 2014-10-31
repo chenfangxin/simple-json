@@ -842,5 +842,14 @@ int rte_object_add_item(struct rte_json *object, const char *name, struct rte_js
 
 int rte_object_del_item(struct rte_json *json, const char *name)
 {
+	int i=0;
+	struct rte_json *item=json->member;	
+	while(item && strcmp(item->name, name)){
+		i++;
+		item=item->next;
+	}
+	if(item){
+		rte_array_del_item(json, i);
+	}
 	return 0;
 }
