@@ -31,7 +31,9 @@ char *rte_serialize_json(struct rte_json *json);
 int rte_array_get_size(struct rte_json *array);
 struct rte_json *rte_array_get_item(struct rte_json *array, int idx);
 int rte_array_add_item(struct rte_json *array, struct rte_json *item);
+int rte_array_del_item(struct rte_json *array, int idx);
 struct rte_json *rte_object_get_item(struct rte_json *object, const char *name);
-int rte_object_add_item(struct rte_json *object, struct rte_json *item);
+int rte_object_add_item(struct rte_json *object, const char *name, struct rte_json *item);
+int rte_object_del_item(struct rte_json *object, const char *name);
 
 #endif

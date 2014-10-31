@@ -398,16 +398,6 @@ int rte_destroy_json(struct rte_json *json)
 	return 0;
 }
 
-int rte_add_item_to_object()
-{
-	return 0;
-}
-
-int rte_add_item_to_array()
-{
-	return 0;
-}
-
 int rte_traverse_json(struct rte_json *json)
 {
 	struct rte_json *next=NULL;
@@ -612,7 +602,47 @@ struct rte_json *rte_array_get_item(struct rte_json *array, int idx)
 
 int rte_array_add_item(struct rte_json *array, struct rte_json *item)
 {
+	struct rte_json *tmp=NULL;
+	if(NULL==item){
+		return 0;
+	}
+	if(NULL==array->member){
+		array->member = item;
+	}else{
+		tmp=array->member;
+		while(tmp && tmp->next){
+			tmp = tmp->next;
+		}
+		tmp->next=item;
+		item->prev=tmp;
+	}
 	return 0;	
+}
+
+int rte_array_del_item(struct rte_json *array, int idx)
+{
+	struct rte_json *item = array->member;	
+	while(item && idx>0){
+		item = item->next;
+		idx--;
+	}
+	if(NULL==item){
+		return 0;
+	}
+	if(item->prev){
+		item->prev->next=item->next;
+	}
+	if(item->next){
+		item->next->prev=item->prev;
+	}
+	if(item==array->member){
+		array->member=item->next;
+	}
+	item->prev=item->next=NULL;
+
+	rte_destroy_json(item);
+
+	return 0;
 }
 
 struct rte_json *rte_object_get_item(struct rte_json *object, const char *name)
@@ -624,7 +654,28 @@ struct rte_json *rte_object_get_item(struct rte_json *object, const char *name)
 	return item;
 }
 
-int rte_object_add_item(struct rte_json *object, struct rte_json *item)
+int rte_object_add_item(struct rte_json *object, const char *name, struct rte_json *item)
+{
+	int len=0;
+	if(NULL==item){
+		return 0;
+	}
+	if(NULL!=item->name){
+		free(item->name);
+	}
+	len = strlen(name)+1;
+	item->name = (char *)malloc(len);
+	if(NULL==item->name){
+		return -1;
+	}
+	memset(item->name, 0, len);
+	strcpy(item->name, name);
+
+	rte_array_add_item(object, item);	
+	return 0;
+}
+
+int rte_object_del_item(struct rte_json *json, const char *name)
 {
 	return 0;
 }
