@@ -24,11 +24,14 @@ struct rte_json{
 	}u;
 };
 
-int is_valid_json(const char *buf, int len);
-
 struct rte_json *rte_parse_json(const char *str);
 int rte_destroy_json(struct rte_json *json);
 int rte_traverse_json(struct rte_json *json);
 char *rte_serialize_json(struct rte_json *json);
+int rte_array_get_size(struct rte_json *array);
+struct rte_json *rte_array_get_item(struct rte_json *array, int idx);
+int rte_array_add_item(struct rte_json *array, struct rte_json *item);
+struct rte_json *rte_object_get_item(struct rte_json *object, const char *name);
+int rte_object_add_item(struct rte_json *object, struct rte_json *item);
 
 #endif

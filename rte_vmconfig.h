@@ -6,12 +6,12 @@
 #define MAX_IF_NUM 20
 
 struct ifset{
-	char ifname[MAX_NAME_LEN];
+	char ifname[MAX_NAME_LEN+1];
 	int vlanid;
 };
 
 struct vmconfig{
-	char vmname[MAX_NAME_LEN];
+	char vmname[MAX_NAME_LEN+1];
 	char cpu[MAX_CPU_NUM];	
 	int memsize;
 	int disksize;

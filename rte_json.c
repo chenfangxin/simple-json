@@ -17,14 +17,6 @@ static inline const char *json_skip(const char *in)
 	return in;
 }
 
-/* 
- * 判断字符串是否为合法的JSON结构
- * */
-int is_valid_json(const char *buf, int len)
-{
-	return 0;
-}
-
 static inline struct rte_json *new_json_item(void)
 {
 	struct rte_json *item = (struct rte_json *)malloc(sizeof(struct rte_json));
@@ -595,4 +587,44 @@ static char *print_value(struct rte_json *json, int depth)
 char *rte_serialize_json(struct rte_json *json)
 {
 	return print_value(json, 0);
+}
+
+int rte_array_get_size(struct rte_json *array)
+{
+	int size=0;
+	struct rte_json *item=array->member;
+	while(item){
+		size++;
+		item = item->next;
+	}	
+	return size;
+}
+
+struct rte_json *rte_array_get_item(struct rte_json *array, int idx)
+{
+	struct rte_json *item = array->member;	
+	while(item && idx>0){
+		idx--;
+		item = item->next;
+	}
+	return item;
+}
+
+int rte_array_add_item(struct rte_json *array, struct rte_json *item)
+{
+	return 0;	
+}
+
+struct rte_json *rte_object_get_item(struct rte_json *object, const char *name)
+{
+	struct rte_json *item = object->member;	
+	while(item && strcmp(item->name, name)){
+		item = item->next;
+	}
+	return item;
+}
+
+int rte_object_add_item(struct rte_json *object, struct rte_json *item)
+{
+	return 0;
 }
