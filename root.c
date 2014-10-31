@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	read(fd, filebuf, st.st_size);
 	close(fd);
 	printf("%s", filebuf);
-#if 0	
+#if 1
 	vmcfg = create_vmconfig(filebuf);
 	if(NULL==vmcfg){
 		goto out1;
@@ -47,11 +47,12 @@ int main(int argc, char *argv[])
 		goto out2;	
 	}
 #endif
+#if 0
 	json = rte_parse_json(filebuf);
 	rte_object_del_item(json, "vmname");
 	new = rte_serialize_json(json);
+#endif
 	printf("New json = %s\n", new);
-
 out2:
 	destroy_vmconfig(vmcfg);
 	free(new);
