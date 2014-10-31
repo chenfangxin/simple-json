@@ -24,6 +24,7 @@ struct rte_json{
 	}u;
 };
 
+struct rte_json *new_json_item(void);
 struct rte_json *rte_parse_json(const char *str);
 int rte_destroy_json(struct rte_json *json);
 int rte_traverse_json(struct rte_json *json);

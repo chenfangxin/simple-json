@@ -17,13 +17,13 @@ static inline const char *json_skip(const char *in)
 	return in;
 }
 
-static inline struct rte_json *new_json_item(void)
+struct rte_json *new_json_item(void)
 {
 	struct rte_json *item = (struct rte_json *)malloc(sizeof(struct rte_json));
-	if(NULL!=item){
-		memset(item, 0, sizeof(struct rte_json));
+	if(NULL==item){
+		return NULL;
 	}
-
+	memset(item, 0, sizeof(struct rte_json));
 	return item;
 }
 
@@ -438,6 +438,7 @@ static char *json_strdup(const char *str)
 	return copy;
 }
 
+static char *print_value(struct rte_json *json, int depth);
 static char *print_number(struct rte_json *json)
 {
 	char *str=NULL;
@@ -456,84 +457,248 @@ static char *print_number(struct rte_json *json)
 	return str;
 }
 
-static char *print_string(struct rte_json *json)
+static char *print_string_ptr(const char *str)
 {
 	const char *ptr;
-	char *ptr2, *out;
+	char *ptr2,*out;
 	int len=0;
 	unsigned char token;
-	const char *str = json->u.val_str;
-	if(NULL==str){
+	
+	if (NULL==str){
 		return json_strdup("");
 	}
 
-	ptr = str;	
+	ptr=str;
 	while((token=*ptr) && ++len){
-		if(strchr("\"\\\b\f\n\r\t", token)){
+		if(strchr("\"\\\b\f\n\r\t",token)){
 			len++;
-		}else if(token<32){
+		}else if (token<32){
 			len+=5;
 		}
 		ptr++;
 	}
-	out = (char *)malloc(len+3);
-	if(NULL==out){
+	
+	out=(char*)malloc(len+3);
+	if (NULL==out){
 		return NULL;
 	}
-	ptr2 = out;
-	ptr = str;
+
+	ptr2=out;
+	ptr=str;
 	*ptr2++='\"';
-	while(*ptr){
-		if(((unsigned char)*ptr>31) && 
-				(*ptr!='\"') &&
-				(*ptr!='\\')){
-			*ptr2++=*ptr++;
-		}else{
+	while (*ptr){
+		if((unsigned char)*ptr>31&&(*ptr!='\"')&&(*ptr!='\\')){
+		   	*ptr2++=*ptr++;
+		}else {
 			*ptr2++='\\';
-			switch (token=*ptr++) {
-				case '\\':
-					*ptr2++='\\';	
-					break;
-				case '\"':
-					*ptr2++='\"';
-					break;
-				case '\b':
-					*ptr2++='b';
-					break;
-				case '\f':
-					*ptr2++='f';
-					break;
-				case '\n':
-					*ptr2++='n';
-					break;
-				case '\r':
-					*ptr2++='r';
-					break;
-				case '\t':
-					*ptr2++='t';
-					break;
+			switch (token=*ptr++){
+				case '\\':	*ptr2++='\\';	break;
+				case '\"':	*ptr2++='\"';	break;
+				case '\b':	*ptr2++='b';	break;
+				case '\f':	*ptr2++='f';	break;
+				case '\n':	*ptr2++='n';	break;
+				case '\r':	*ptr2++='r';	break;
+				case '\t':	*ptr2++='t';	break;
 				default: 
 					sprintf(ptr2,"u%04x",token);
 					ptr2+=5;
-					break;
+					break;	/* escape and print */
 			}
-
 		}
 	}
 	*ptr2++='\"';
-	*ptr2++='\0';
+	*ptr2++=0;
 	return out;
+}
+
+static char *print_string(struct rte_json *json)
+{
+	return print_string_ptr(json->u.val_str);
 }
 
 static char *print_array(struct rte_json *json, int depth)
 {
-	char *out=NULL;
+	char **entries;
+	char *out=NULL, *ptr, *ret;
+	int len=5;
+	int numentries=0,i=0,fail=0;
+	struct rte_json *item=json->member;
+
+	/* */
+	while(NULL!=item){
+		numentries++;
+		item=item->next;
+	}
+	if(0==numentries){
+		out=(char *)malloc(3);
+		if(NULL==out){
+			return NULL;
+		}
+		memset(out, 0, 3);
+		strcpy(out, "[]");
+		return out;
+	}
+
+	/* */
+	entries = (char **)malloc(numentries*sizeof(char *));
+	if(NULL==entries){
+		return NULL;
+	}
+	memset(entries, 0, numentries*sizeof(char *));
+
+	item=json->member;
+	while(item && !fail){
+		ret=print_value(item, depth+1);
+		entries[i++]=ret;
+		if(ret){
+			len += strlen(ret)+2+1;
+		}else{
+			fail=1;
+		}
+		item=item->next;
+	}
+
+	if(!fail){
+		out=(char *)malloc(len);
+	}
+	if(NULL==out){
+		fail=1;
+	}
+	if(fail){
+		for(i=0;i<numentries;i++){
+			if(entries[i]){
+				free(entries[i]);
+			}
+		}
+		free(entries);
+		return NULL;
+	}
+
+	*out='[';
+	ptr=out+1;
+	*ptr='\0';
+	for(i=0;i<numentries;i++){
+		strcpy(ptr, entries[i]);
+		ptr+=strlen(entries[i]);
+		if(i!=(numentries-1)){
+			*ptr++=',';
+			*ptr++=' ';
+			*ptr='\0';
+		}
+		free(entries[i]);
+	}
+	free(entries);
+	*ptr++=']';
+	*ptr++='\0';
 	return out;
 }
 
 static char *print_object(struct rte_json *json, int depth)
 {
-	char *out=NULL;
+	char *out=NULL, *ptr, *str, *ret;
+	char **entries=NULL, **names=NULL;
+	int numentries=0;
+	int len=7;
+	int i=0,j=0;
+	int fail=0;
+	struct rte_json *item=json->member;
+
+	/* 计算Object的member个数*/
+	while(item){
+		numentries++;
+		item=item->next;
+	}
+	if(0==numentries){ // 如果是空Object
+		out=(char *)malloc(depth+4);
+		if(NULL==out){
+			return NULL;
+		}
+		ptr=out;
+		*ptr++='{';
+		*ptr++='\n';
+		for(i=0;i<depth-1;i++){
+			*ptr++='\t';
+		}
+		*ptr++='}';
+		*ptr++='\0';
+		return out;
+	}
+
+	entries = (char **)malloc(numentries*sizeof(char *));	
+	if(NULL==entries){
+		return NULL;
+	}
+	names = (char **)malloc(numentries*sizeof(char *));
+	if(NULL==names){
+		free(entries);
+		return NULL;
+	}
+	memset(entries, 0, numentries*sizeof(char *));
+	memset(names, 0, numentries*sizeof(char *));
+
+	item = json->member;
+	depth++;
+	len += depth;
+	while(NULL!=item){
+		names[i] = str = print_string_ptr(item->name);
+		entries[i] = ret = print_value(item, depth);
+		i++;	
+		if(str && ret){
+			len += strlen(ret)+strlen(str)+2+(2+depth);
+		}else{
+			fail=1;
+		}
+		item=item->next;
+	}
+	if(0==fail){
+		out = (char *)malloc(len);
+		if(NULL==out){
+			fail=1;
+		}
+	}
+	if(fail){
+		for(i=0;i<numentries;i++){
+			if(names[i]){
+				free(names[i]);
+			}
+			if(entries[i]){
+				free(entries[i]);
+			}
+		}
+		free(names);
+		free(entries);
+		return NULL;
+	}
+	
+	*out='{';	
+	ptr=out+1;
+	*ptr++='\n';
+	*ptr='\0';
+	for(i=0;i<numentries;i++){
+		for(j=0;j<depth;j++){
+			*ptr++='\t';
+		}
+		strcpy(ptr, names[i]);
+		ptr+=strlen(names[i]);
+		*ptr++=':';
+		*ptr++='\t';
+		strcpy(ptr, entries[i]);
+		ptr+=strlen(entries[i]);
+		if(i!=(numentries-1)){
+			*ptr++=',';
+		}
+		*ptr++='\n';
+		*ptr='\0';
+		free(names[i]);
+		free(entries[i]);
+	}
+	free(names);
+	free(entries);
+	for(i=0;i<depth-1;i++){
+		*ptr++='\t';
+	}
+	*ptr++='}';
+	*ptr++='\0';
 	return out;
 }
 
