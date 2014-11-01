@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	int fd=0;
 	struct stat st;
 	struct vmconfig *vmcfg=NULL;
-	struct rte_json *json=NULL;
+//	struct rte_json *json=NULL;
 	char *new=NULL;
 
 	memset(&st, 0, sizeof(struct stat));
