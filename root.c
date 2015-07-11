@@ -16,6 +16,12 @@ int main(int argc, char *argv[])
 	struct vmconfig *vmcfg=NULL;
 //	struct rte_json *json=NULL;
 	char *new=NULL;
+	int fmt=0;
+	if(argc<2){
+		return -1;
+	}
+
+	fmt = atoi(argv[1]);
 
 	memset(&st, 0, sizeof(struct stat));
 	if(stat("vmconfig.json", &st)){
@@ -42,7 +48,7 @@ int main(int argc, char *argv[])
 		goto out1;
 	}
 	
-	new = serialize_vmconfig(vmcfg);
+	new = serialize_vmconfig(vmcfg, fmt);
 	if(NULL==new){
 		goto out2;	
 	}

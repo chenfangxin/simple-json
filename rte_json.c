@@ -599,7 +599,7 @@ static char *print_object(struct rte_json *json, int depth, int fmt)
 	char *out=NULL, *ptr, *name, *value;
 	char **entries=NULL, **names=NULL;
 	int numentries=0;
-	int len=4; //用于存放{\n }\0
+	int len=7; 
 	int i=0,j=0;
 	int fail=0;
 	struct rte_json *item=json->member;

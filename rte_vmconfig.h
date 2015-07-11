@@ -21,6 +21,6 @@ struct vmconfig{
 };
 
 struct vmconfig *create_vmconfig(const char *);
-char *serialize_vmconfig(struct vmconfig *);
+char *serialize_vmconfig(struct vmconfig *, int);
 int destroy_vmconfig(struct vmconfig *);
 #endif

@@ -87,7 +87,7 @@ out:
 }
 
 /* 对结构体进行序列化，生成对应的JSON文本 */
-char *serialize_vmconfig(struct vmconfig *vmcfg)
+char *serialize_vmconfig(struct vmconfig *vmcfg, int fmt)
 {
 	struct rte_json *json=NULL, *item=NULL;	
 	struct rte_json *tmp=NULL, *tmp1=NULL;
@@ -237,7 +237,7 @@ char *serialize_vmconfig(struct vmconfig *vmcfg)
 	item->u.val_int = vmcfg->autorun;
 	rte_object_add_item(json, "autorun", item);
 
-	str = rte_serialize_json(json, 1);
+	str = rte_serialize_json(json, fmt);
 
 //	printf("Result:\n%s\n", str);	
 
