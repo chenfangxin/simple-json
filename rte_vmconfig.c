@@ -237,7 +237,7 @@ char *serialize_vmconfig(struct vmconfig *vmcfg)
 	item->u.val_int = vmcfg->autorun;
 	rte_object_add_item(json, "autorun", item);
 
-	str = rte_serialize_json(json);
+	str = rte_serialize_json(json, 1);
 
 //	printf("Result:\n%s\n", str);	
 
