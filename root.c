@@ -18,10 +18,11 @@ int main(int argc, char *argv[])
 	char *new=NULL;
 	int fmt=0;
 	if(argc<2){
-		return -1;
+		fmt=1;
+		printf("Default format %d.\n", fmt);
+	}else{
+		fmt = atoi(argv[1]);
 	}
-
-	fmt = atoi(argv[1]);
 
 	memset(&st, 0, sizeof(struct stat));
 	if(stat("vmconfig.json", &st)){
@@ -58,7 +59,7 @@ int main(int argc, char *argv[])
 	rte_object_del_item(json, "vmname");
 	new = rte_serialize_json(json);
 #endif
-	printf("New json = %s\n", new);
+	printf("New json:\n%s\n", new);
 out2:
 	destroy_vmconfig(vmcfg);
 	free(new);

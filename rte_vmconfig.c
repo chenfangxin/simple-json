@@ -237,11 +237,18 @@ char *serialize_vmconfig(struct vmconfig *vmcfg, int fmt)
 	item->u.val_int = vmcfg->autorun;
 	rte_object_add_item(json, "autorun", item);
 
-	str = rte_serialize_json(json, fmt);
+	str = malloc(4096);
+	if(NULL==str){
+		printf("Failed to alloc str buf.\n");
+	}
+	memset(str, 0, 4096);
+	len = rte_persist_json(str, json, fmt);
+	// str = rte_serialize_json(json, fmt);
 
-//	printf("Result:\n%s\n", str);	
+	printf("Result:len=%d, %s\n", len, str);
 
 	rte_destroy_json(json);
+
 	return str;
 err_out:
 	rte_destroy_json(json);
