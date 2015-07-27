@@ -241,6 +241,7 @@ char *serialize_vmconfig(struct vmconfig *vmcfg, int fmt)
 
 //	printf("Result:\n%s\n", str);	
 
+	rte_destroy_json(json);
 	return str;
 err_out:
 	rte_destroy_json(json);
