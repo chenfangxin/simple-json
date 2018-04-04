@@ -1101,7 +1101,7 @@ static int persist_value(char *buf, struct rte_json *json, int depth, int fmt)
 			break;
 	}
 	if(depth==0){
-		*(buf+len) = '\0';
+		*(buf+len) = '\n';
 		len += 1;
 	}
 	return len;
